@@ -42,7 +42,7 @@ def avail():
 
     return jsonify(result)
 
-@app.route("/booking/confirm",methods=['POST'])
+@app.route("/booking/confirm", methods=['POST'])
 def confirm():
     values = request.get_json()
     rateKey = values['rateKey']
@@ -50,6 +50,10 @@ def confirm():
     date_to = values['to']
     return api_client.booking_confirm(rateKey, date_from, date_to)
 
+
+@app.route("/booking/cancel/<reference>", methods=['DELETE'])
+def cancel(reference):
+    return api_client.booking_cancel(reference)
 
 
 if __name__ == "__main__":

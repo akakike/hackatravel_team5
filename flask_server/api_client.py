@@ -1,7 +1,5 @@
 import time, hashlib
 import requests
-import json
-from django.http import JsonResponse
 
 # Your API Key and secret
 apiKey = "pe6ud6vswhta6a49epk356kz"
@@ -84,3 +82,7 @@ def booking_confirm(rateKey, date_from, date_to):
           ]
         }
     return call("https://api.test.hotelbeds.com/activity-api/3.0/bookings", params)
+
+
+def booking_cancel(reference):
+    return call("https://api.test.hotelbeds.com/activity-api/3.0/bookings/en/" + reference)
