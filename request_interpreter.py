@@ -5,11 +5,8 @@ import dateparser
 FILE_PATH = 'resources/destinations.csv'
 
 def translate_human_request(request):
-    print(request)
     tokens = nltk.word_tokenize(request)
-    print(tokens)
     tags = nltk.pos_tag(tokens)
-    print(tags)
 
     destinations_map = destinations_mapper()
 
@@ -17,8 +14,7 @@ def translate_human_request(request):
 
     dates = extract_dates(tags)
 
-    print(places)
-    print(dates)
+    return { 'places':places, 'dates': dates }
 
 
 def extract_dates(tags):
@@ -54,6 +50,3 @@ def extract_places(tags, destination_map):
                     places.append(destination_map[city])
     return places
 
-
-translate_human_request('hi bitches!')
-translate_human_request("i'm in london tomorrow, anything interesting there?")

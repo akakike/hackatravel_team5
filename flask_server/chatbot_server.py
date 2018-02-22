@@ -1,7 +1,8 @@
 from flask import Flask
-#from . import api_client
-import api_client
+from flask import request
+from . import api_client
 import json
+from flask.json import jsonify
 
 app = Flask(__name__)
 
@@ -10,10 +11,9 @@ class AvailRS(object):
     def __init__(self, data):
         self.__dict__ = json.loads(data)
 
-dictfilt = lambda x, y: dict([ (i,x[i]) for i in x if i in set(y) ])
 
-@app.route("/")
-def hello():
+@app.route("/avail")
+def avail():
     avail_response = api_client.avail_destination('MCO')
     avail_json = AvailRS(avail_response)
 
@@ -39,5 +39,17 @@ def hello():
 
         result.append(item)
 
-    return result
+    return jsonify(result)
 
+@app.route("/booking/confirm",methods=['POST'])
+def confirm():
+    values = request.get_json()
+    rateKey = values['rateKey']
+    date_from = values['from']
+    date_to = values['to']
+    return api_client.booking_confirm(rateKey, date_from, date_to)
+
+
+
+if __name__ == "__main__":
+    app.run()
