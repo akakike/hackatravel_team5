@@ -1,6 +1,6 @@
 from flask import Flask
 from flask import request
-from . import api_client
+import api_client
 import json
 from flask.json import jsonify
 
@@ -12,7 +12,7 @@ class AvailRS(object):
         self.__dict__ = json.loads(data)
 
 
-@app.route("/avail")
+@app.route("/avail", methods=['POST'])
 def avail():
     avail_response = api_client.avail_destination('MCO')
     avail_json = AvailRS(avail_response)
