@@ -20,7 +20,7 @@ def call(endpoint, params=None):
     # Reading response and print-out
     response = requests.post(endpoint, json=params, headers=headers)
 
-    return response.json
+    return response.content
 
 
 def avail_destination(destination_code):
@@ -44,3 +44,43 @@ def avail_destination(destination_code):
     }
 
     return call("https://api.test.hotelbeds.com/activity-api/3.0/activities", params)
+
+
+
+def booking_confirm(rateKey, date_from, date_to):
+    params = {
+          "language": "en",
+          "clientReference": "Agency test",
+          "holder": {
+            "name": "TestHolder",
+            "email": "testholder@hotelbeds.com",
+            "surname": "Test",
+            "telephones": [
+              "123456789"
+            ]
+          },
+          "activities": [
+            {
+              "preferedLanguage": "en",
+              "serviceLanguage": "en",
+              "rateKey": rateKey,
+              "from": date_from,
+              "to": date_to,
+              "paxes": [
+                {
+                  "age": 30,
+                  "name": "TestPax1",
+                  "type": "ADULT",
+                  "surname": "Test"
+                },
+                {
+                  "age": 10,
+                  "name": "TestPax2",
+                  "type": "CHILD",
+                  "surname": "Test"
+                }
+              ]
+            }
+          ]
+        }
+    return call("https://api.test.hotelbeds.com/activity-api/3.0/bookings", params)

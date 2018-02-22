@@ -29,7 +29,7 @@ def extract_dates(tags):
 
 def destinations_mapper():
     destinations_map = {}
-    destinations_file = open(FILE_PATH, 'r')
+    destinations_file = open(FILE_PATH, 'r', encoding='UTF8')
     for row in destinations_file:
         destinations_array = row.split(',')
         destinations_map[destinations_array[1].replace("\n", "")] = destinations_array[0]
