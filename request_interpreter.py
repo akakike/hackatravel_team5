@@ -23,11 +23,13 @@ def translate_human_request(request):
 
 def extract_dates(tags):
     dates = []
+    d = []
     for tag in tags:
         if "NN" == tag[1]:
             date = dateparser.parse(tag[0])
             if date != None:
-                dates.append(date)
+                #print(date.strftime("%Y-%m-%d"))
+                dates.append(date.strftime("%Y-%m-%d"))
     return dates
 
 
