@@ -20,7 +20,7 @@ def call(endpoint, params=None):
     # Reading response and print-out
     response = requests.post(endpoint, json=params, headers=headers)
 
-    return response.json
+    return response.content
 
 
 def avail_destination(destination_code):

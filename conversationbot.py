@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from telegram import ReplyKeyboardMarkup, ReplyKeyboardRemove
+from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
 
@@ -13,10 +13,10 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-CHOOSING, LOG_IN, CHOOSE_DESTINATION, FILTER_AND_SELECT, CHECK_PERSONAL_INFO, CONFIRMATION, ASK_INFO, CONFIRM_ACCOUNT_INFO = range(8)
+CHOOSING, LOG_IN, CHOOSE_DESTINATION, SEARCH_BY_LOCATION, FILTER_AND_SELECT, CHECK_PERSONAL_INFO, CONFIRMATION, ASK_INFO, CONFIRM_ACCOUNT_INFO = range(9)
 
 main_keyboard = [['Book'], 
-                 ['Manage Bookings'],
+                 ['Near me'],
                  ['Log in']]
 yesno_keyboard = [['Yes'],
                   ['No']]
@@ -57,13 +57,25 @@ def regular_choice(bot, update, user_data):
     if text == 'Book':
         update.message.reply_text('Type where and when you want to go')
         return CHOOSE_DESTINATION
-    elif text == 'Manage Bookings':
-        # To do
-        return CHOOSE_DESTINATION
+    elif text == 'Near me':
+        location_keyboard = KeyboardButton(text="Send location", request_location=True)
+        markup = ReplyKeyboardMarkup([[location_keyboard]])
+        update.message.reply_text('Please send your location:', reply_markup = markup)
+        return SEARCH_BY_LOCATION
     else:
         update.message.reply_text('Type your credentials')
         return LOG_IN
     
+def search_by_location(bot, update, user_data):
+    user_data['location'] = update.message.location
+    # Get area offers by area from API
+    user_data['response'] = '/1 Destino 1 \n /2 Destino 2' #Api response
+    update.message.reply_text('Reply for {}, {}:\n {}'.format(user_data['location'].longitude,
+                                                              user_data['location'].latitude,
+                                                              user_data['response']))
+    update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
+    return FILTER_AND_SELECT
+
 def nl_to_dispo(bot, update, user_data):
     text = update.message.text
     user_data['nl_message'] = text
@@ -143,7 +155,7 @@ def main():
         entry_points=[CommandHandler('start', start)],
 
         states={
-            CHOOSING: [RegexHandler('^(Book|Manage bookings|Log in)$',
+            CHOOSING: [RegexHandler('^(Book|Near me|Log in)$',
                                     regular_choice,
                                     pass_user_data=True),
                        MessageHandler(Filters.text,
@@ -158,6 +170,7 @@ def main():
                                                 nl_to_dispo,
                                                 pass_user_data=True),
                                 ],
+            SEARCH_BY_LOCATION: [MessageHandler(Filters.location, search_by_location, pass_user_data = True)],
             FILTER_AND_SELECT: [CommandHandler('1', select_from_dispo, pass_user_data=True),
                                 CommandHandler('2', select_from_dispo, pass_user_data=True),
                                 CommandHandler('3', select_from_dispo, pass_user_data=True),
@@ -176,7 +189,9 @@ def main():
             CONFIRMATION: [RegexHandler('^(Yes|No)$', book, pass_user_data = True)],
         },
 
-        fallbacks=[RegexHandler('^Done$', done, pass_user_data=True)]
+        fallbacks=[RegexHandler('^Done$', done, pass_user_data=True),
+                   MessageHandler(Filters.location, search_by_location, pass_user_data = True)
+                  ]
     )
 
     dp.add_handler(conv_handler)
