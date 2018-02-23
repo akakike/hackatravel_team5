@@ -72,12 +72,16 @@ def avail(bot, update, user_data, data):
     update.message.reply_text('Querying results for"{}"'.format(data))
     avail_rq = {
         "destination": data["places"][0],
-        "from": data["dates"][0]
     }
-    if len(data["dates"])>1:
+    if len(data["dates"]) > 1:
+        avail_rq["from"] = data["dates"][0]
         avail_rq["to"] = data["dates"][1]
-    else:
+    elif len(data["dates"]) == 1:
+        avail_rq["from"] = data["dates"][0]
         avail_rq["to"] = data["dates"][0]
+    else:
+        avail_rq["from"] = datetime.datetime.today().strftime('%Y-%m-%d')
+        avail_rq["to"] = datetime.datetime.today().strftime('%Y-%m-%d')
 
     user_data["request"] = avail_rq
 
@@ -96,12 +100,11 @@ def avail_location(bot, update, user_data, data):
     #     avail_rq["from"] = data["dates"][0]
     # else:
     avail_rq["from"] = datetime.datetime.today().strftime('%Y-%m-%d')
-
     # if "dates" in data.keys() and len(data["dates"])>1:
     #     avail_rq["to"] = data["dates"][1]
     # else:
     avail_rq["to"] = datetime.datetime.today().strftime('%Y-%m-%d')
-
+    
     user_data["request"] = avail_rq
 
     if mocked:

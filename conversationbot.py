@@ -198,7 +198,7 @@ def confirm(bot, update, user_data):
 
 def main():
     # Create the Updater and pass it your bot's token.
-    updater = Updater(token="537393200:AAEoMW2iuH1SUjkZt5PoVeo6sPQDZuNJheo")
+    updater = Updater(token="429486437:AAEsUvzhpLL6YBgdJOCheJ81PBw7WY3MMt8")
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
