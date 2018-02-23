@@ -36,16 +36,17 @@ def avail():
             'priceFrom': activity_item["amountsFrom"][0]["amount"],
             'priceTo': activity_item["amountsFrom"][len(activity_item["amountsFrom"])-1]["amount"]
         }
-        if len(activity_item["content"]["segmentationGroups"]) > 0:
-            for segmentationGroup in activity_item["content"]["segmentationGroups"]:
-                if segmentationGroup["code"] == 1:
-                    item["type"] = segmentationGroup["segments"][0]["name"]
-                if segmentationGroup["code"] == 2:
-                    item["target"] = segmentationGroup["segments"][0]["name"]
-                if segmentationGroup["code"] == 3:
-                    item["duration"] = segmentationGroup["segments"][0]["name"]
+        if "content" in activity_item.keys():
+            if len(activity_item["content"]["segmentationGroups"]) > 0:
+                for segmentationGroup in activity_item["content"]["segmentationGroups"]:
+                    if segmentationGroup["code"] == 1:
+                        item["type"] = segmentationGroup["segments"][0]["name"]
+                    if segmentationGroup["code"] == 2:
+                        item["target"] = segmentationGroup["segments"][0]["name"]
+                    if segmentationGroup["code"] == 3:
+                        item["duration"] = segmentationGroup["segments"][0]["name"]
 
-        item["image"] = activity_item["content"]["media"]["images"][0]["urls"][0]["resource"]
+            item["image"] = activity_item["content"]["media"]["images"][0]["urls"][0]["resource"]
 
         result.append(item)
 
