@@ -28,6 +28,9 @@ def avail():
 
     result = []
 
+    if not hasattr(avail_json, "activities"):
+        return jsonify([])
+
     for activity_result in avail_json.activities:
         activity_item = activity_result
         item = {

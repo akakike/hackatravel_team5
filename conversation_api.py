@@ -69,7 +69,7 @@ def call(endpoint, params=None):
 
 
 def avail(bot, update, user_data, data):
-    update.message.reply_text('Querying results for"{}"'.format(data))
+    #update.message.reply_text('Querying results for"{}"'.format(data))
     avail_rq = {
         "destination": data["places"][0],
     }
