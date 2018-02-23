@@ -10,7 +10,7 @@ def parse_dispo(text, bot, update, user_data):
     for dispo_item in data:
         response = '/{} '.format(i)
         if 'image' in dispo_item.keys():
-            response += '[{}]({})'.format(dispo_item['name'], dispo_item['image'])
+            response += '{} [(#)]({})'.format(dispo_item['name'], dispo_item['image'])
         else:
             response += dispo_item['name']
         if 'duration' in dispo_item.keys():
