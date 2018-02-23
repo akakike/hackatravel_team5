@@ -44,7 +44,7 @@ def start(bot, update):
         "Hi! My name is Hack@Travel."
         "How can I help you?"
         "\nIf you want to restart your search type /reset"
-        "\nI suppose you are here looking for an activity"
+        "\nI suppose you are here looking for an activity, "
         "Am I right? " + emojize(':direct_hit:', use_aliases=True)
         ,
         reply_markup=main_markup)
@@ -85,6 +85,7 @@ def regular_choice(bot, update, user_data):
 
 def search_by_location(bot, update, user_data):
     user_data['location'] = update.message.location
+    update.message.reply_text('Looking up in our database...', reply_markup=ReplyKeyboardRemove())
     # Get area offers by area from API
     conversation_api.avail_location(bot, update, user_data, user_data['location'])
 
@@ -205,8 +206,10 @@ def confirm(bot, update, user_data):
 
 def main():
     # Create the Updater and pass it your bot's token.
-    updater = Updater(token="537393200:AAEoMW2iuH1SUjkZt5PoVeo6sPQDZuNJheo")
+    #updater = Updater(token="537393200:AAEoMW2iuH1SUjkZt5PoVeo6sPQDZuNJheo")
     #Kike updater = Updater(token="528148174:AAHhjwmFFBS76wcbN7bw3Q8R9JM2taOAX-s")
+    #Toni 
+    updater = Updater(token="429486437:AAEsUvzhpLL6YBgdJOCheJ81PBw7WY3MMt8")
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
