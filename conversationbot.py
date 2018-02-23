@@ -4,11 +4,11 @@
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
+import telegram
 import request_interpreter as nlp
-from json_parser import parse_dispo
 import conversation_api
+import conversation_pax
 import logging
-import requests
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -16,18 +16,21 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-CHOOSING, LOG_IN, CHOOSE_DESTINATION, SEARCH_BY_LOCATION, FILTER_AND_SELECT, FILTER, CHECK_PERSONAL_INFO, CONFIRMATION, ASK_INFO, CONFIRM_ACCOUNT_INFO = range(10)
+CHOOSING, LOG_IN, CHOOSE_DESTINATION, SEARCH_BY_LOCATION, FILTER_AND_SELECT, FILTER, CHECK_PERSONAL_INFO, CONFIRMATION\
+    ,ASK_INFO, ASK_AGE, CONFIRM_ACCOUNT_INFO, = range(11)
 
 main_keyboard = [['Book'], 
                  ['Near me'],
                  ['Log in']]
 yesno_keyboard = [['Yes'],
                   ['No']]
+yesnopaxes_keyboard = [['Yes'],['No'],['Add Pax'],['Other People']]
 filter_keyboard = [['Date'], 
                    ['Price'], 
                    ['Cheapest dates']]
 main_markup = ReplyKeyboardMarkup(main_keyboard, one_time_keyboard=True)
 yesno_markup = ReplyKeyboardMarkup(yesno_keyboard, one_time_keyboard=True)
+yesnopaxes_markup = ReplyKeyboardMarkup(yesnopaxes_keyboard, one_time_keyboard=True)
 filter_markup = ReplyKeyboardMarkup(filter_keyboard, one_time_keyboard=True)
 
 
@@ -39,9 +42,11 @@ def facts_to_str(user_data):
 
     return "\n".join(facts).join(['\n', '\n'])
 
+
 def reset(bot, update):
     update.message.reply_text("Let's restart", reply_markup=main_markup)
     return CHOOSING
+
 
 def start(bot, update):
     update.message.reply_text(
@@ -51,12 +56,17 @@ def start(bot, update):
 
     return CHOOSING
 
+
 def log_in(bot, update, user_data):
     update.message.reply_text('Logging in...')
     # OAUTH
     
     user_data['token'] = '1234'
-    update.message.reply_text('OK! What do you want to do now?', reply_markup=main_markup)
+    user_data['paxes'] = []
+    user_data['paxes'].append({'name': 'John Doe', 'age': 45})
+    update.message.reply_text('Hi John,', reply_markup=main_markup)
+    update.message.reply_text('Write your search or select in buttons below', reply_markup=main_markup)
+
     return CHOOSING
 
 
@@ -79,10 +89,8 @@ def regular_choice(bot, update, user_data):
 def search_by_location(bot, update, user_data):
     user_data['location'] = update.message.location
     # Get area offers by area from API
-    user_data['response'] = '/1 Destino 1 \n /2 Destino 2' #Api response
-    update.message.reply_text('Reply for {}, {}:\n {}'.format(user_data['location'].longitude,
-                                                              user_data['location'].latitude,
-                                                              user_data['response']))
+    conversation_api.avail_location(bot, update, user_data, user_data['location'])
+
     update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
     return FILTER_AND_SELECT
 
@@ -93,11 +101,8 @@ def nl_to_dispo(bot, update, user_data):
     parsed_text = nlp.translate_human_request(text)
     update.message.reply_text('Querying results for"{}"'.format(parsed_text))
     
-    res = conversation_api.call('http://localhost:5000/avail')
-    res = parse_dispo(res, bot, update, user_data)
+    conversation_api.avail(bot, update, user_data, parsed_text)
 
-    # user_data['response'] = res
-    # update.message.reply_text('{}'.format(user_data['response']))
     update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
     return FILTER_AND_SELECT
 
@@ -113,6 +118,7 @@ def filter(bot, update, user_data):
         apply_filter(bot, update, user_data)
     return FILTER
 
+
 def apply_filter(bot, update, user_data):
     text = update.message.text
     command = user_data['filter']
@@ -123,37 +129,52 @@ def apply_filter(bot, update, user_data):
         
     #else:
         
-    res = call('http://localhost:5000/avail')
-    res = parse_dispo(res)
+    conversation_api.avail(bot, update, user_data)
 
-    user_data['response'] = res
-    update.message.reply_text('{}'.format(user_data['response']))
     update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
     return FILTER_AND_SELECT
 
+
 def select_from_dispo(bot, update, user_data):
-    update.message.reply_text('Selected option {}'.format(update.message.text))
+    bot.send_message(chat_id=update.message.chat_id, text='{}'.format(user_data['response'][int(update.message.text[1])-1][2:]), parse_mode=telegram.ParseMode.MARKDOWN)
     if 'token' in user_data.keys():
-        update.message.reply_text('Do you want to book with your account stored information?\nName:xx,\n ...', reply_markup=yesno_markup)
-        user_data['data'] = 'Some user data'
+        update.message.reply_text('Do you want to book with your account stored information?\n', reply_markup=yesnopaxes_markup)
+        conversation_pax.print_pax_info(bot, update, user_data)
         return CONFIRM_ACCOUNT_INFO
     else:
-        update.message.reply_text('Please enter your information:', reply_markup = ReplyKeyboardRemove())
+        update.message.reply_text('Please enter your full name:', reply_markup = ReplyKeyboardRemove())
         return ASK_INFO
+
 
 def confirm_account_info(bot, update, user_data):
     text = update.message.text
     if text == 'Yes':
-        confirm(update, user_data['data'])
+        confirm(bot, update, user_data)
         return CONFIRMATION
-    else:
-        update.message.reply_text('Please enter your information:', reply_markup = ReplyKeyboardRemove())
+    if text == 'No':
+        update.message.reply_text('Please enter your full name:', reply_markup = ReplyKeyboardRemove())
+        return ASK_INFO
+    if text == 'Add Pax':
+        conversation_pax.add_pax(user_data)
+        update.message.reply_text('Please enter your full name:', reply_markup=ReplyKeyboardRemove())
+        return ASK_INFO
+    if text == 'Other People':
+        conversation_pax.reset_paxes(user_data)
+        update.message.reply_text('Please enter your full name:', reply_markup=ReplyKeyboardRemove())
         return ASK_INFO
 
+
 def parse_user_info(bot, update, user_data):
-    user_data['data'] = update.message.text
-    confirm(update, user_data['data'])
+    conversation_pax.set_name_to_current_pax(user_data, update.message.text)
+    update.message.reply_text('Please enter your age:', reply_markup=ReplyKeyboardRemove())
+    return ASK_AGE
+
+
+def parse_user_age(bot, update, user_data):
+    conversation_pax.set_age_to_current_pax(user_data, update.message.text)
+    confirm(bot, update, user_data)
     return CONFIRMATION
+
 
 def book(bot, update, user_data):
     text = update.message.text
@@ -161,12 +182,25 @@ def book(bot, update, user_data):
         update.message.reply_text('Booking')
         # Book using API
         update.message.reply_text('Booking successful', reply_markup = main_markup)
-    else:
+        return CHOOSING
+    if text == 'No':
         update.message.reply_text('Cancelling..', reply_markup = main_markup)
-    return CHOOSING
+        return CHOOSING
+    if text == 'Add Pax':
+        conversation_pax.add_pax(user_data)
+        update.message.reply_text('Please enter your full name:', reply_markup=ReplyKeyboardRemove())
+        return ASK_INFO
+    if text == 'Other People':
+        conversation_pax.reset_paxes(user_data)
+        update.message.reply_text('Please enter your full name:', reply_markup=ReplyKeyboardRemove())
+        return ASK_INFO
 
-def confirm(update, info):
-    update.message.reply_text('Confirm with info: info info info', reply_markup=yesno_markup)
+
+
+def confirm(bot, update, user_data):
+    update.message.reply_text('Confirm with info: ' , reply_markup=yesnopaxes_markup)
+    conversation_pax.print_pax_info(bot, update, user_data)
+
 
 def done(bot, update, user_data):
     if 'choice' in user_data:
@@ -178,6 +212,7 @@ def done(bot, update, user_data):
 
     user_data.clear()
     return ConversationHandler.END
+
 
 def error(bot, update, error):
     """Log Errors caused by Updates."""
@@ -222,13 +257,16 @@ def main():
                                              pass_user_data=True)
                                 ],
             FILTER: [MessageHandler(Filters.text, apply_filter, pass_user_data = True)],
-            CONFIRM_ACCOUNT_INFO: [RegexHandler('^(Yes|No)$', confirm_account_info, pass_user_data = True)],
+            CONFIRM_ACCOUNT_INFO: [RegexHandler('^(Yes|No|Add Pax|Other People)$', confirm_account_info, pass_user_data = True)],
             ASK_INFO: [MessageHandler(Filters.text, 
                                       parse_user_info, 
                                       pass_user_data = True)
                       ],
-            
-            CONFIRMATION: [RegexHandler('^(Yes|No)$', book, pass_user_data = True)],
+            ASK_AGE: [MessageHandler(Filters.text,
+                                      parse_user_age,
+                                      pass_user_data = True)
+                      ],
+            CONFIRMATION: [RegexHandler('^(Yes|No|Add Pax|Other People)$', book, pass_user_data = True)],
         },
 
         fallbacks=[RegexHandler('^Done$', done, pass_user_data=True),

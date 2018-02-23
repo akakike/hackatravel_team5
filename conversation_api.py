@@ -1,4 +1,5 @@
 import requests
+from json_parser import parse_dispo
 
 def call(endpoint, params=None):
     return """
@@ -56,3 +57,15 @@ def call(endpoint, params=None):
     # Reading response and print-out
     response = requests.post(endpoint, json=params, headers=headers)
     return response.content
+
+
+def avail(bot, update, user_data, data):
+    update.message.reply_text('Querying results for"{}"'.format(data))
+
+    res = call('http://localhost:5000/avail')
+    parse_dispo(res, bot, update, user_data)
+
+
+def avail_location(bot, update, user_data, data):
+    return avail(bot, update, user_data, data)
+
