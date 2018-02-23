@@ -1,6 +1,7 @@
 import nltk
 from geotext import GeoText
 import dateparser
+from dateutil.parser import parse
 
 FILE_PATH = 'resources/destinations.csv'
 
@@ -12,22 +13,19 @@ def translate_human_request(request):
 
     places = extract_places(tags, destinations_map)
 
-    dates = extract_dates(tags)
+    dates = extract_dates(request)
 
     return { 'places':places, 'dates': dates }
 
-
-def extract_dates(tags):
+def extract_dates(request):
+    pairs = nltk.bigrams(request.split())
     dates = []
-    d = []
-    for tag in tags:
-        if "NN" == tag[1]:
-            date = dateparser.parse(tag[0])
-            if date != None:
-                #print(date.strftime("%Y-%m-%d"))
-                dates.append(date.strftime("%Y-%m-%d"))
+    for p in pairs:
+        try:
+            dates.append(parse(' '.join(p)))
+        except:
+            pass
     return dates
-
 
 def destinations_mapper():
     destinations_map = {}
