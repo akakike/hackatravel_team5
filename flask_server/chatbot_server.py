@@ -15,10 +15,15 @@ class Response(object):
 @app.route("/avail", methods=['POST'])
 def avail():
     values = request.get_json()
-    destination = values['destination']
+    destination = None
+    location = None
+    if "destination" in values.keys():
+        destination = values['destination']
+    if "location" in values.keys():
+        location = values['location']
     date_from = values['from']
     date_to = values['to']
-    avail_response = api_client.avail_destination(destination, date_from, date_to)
+    avail_response = api_client.avail_destination(date_from, date_to, destination, location)
     avail_json = Response(avail_response)
 
     result = []
@@ -82,6 +87,7 @@ def confirm():
     date_from = values['from']
     date_to = values['to']
     response = api_client.booking_confirm(rateKey, date_from, date_to)
+    print("confirm response:{}".format(response))
     response_json = Response(response)
 
     result = []

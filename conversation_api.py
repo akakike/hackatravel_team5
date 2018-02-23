@@ -1,5 +1,7 @@
 import requests
 from json_parser import parse_dispo
+import json
+import datetime
 
 mocked = False
 
@@ -77,6 +79,8 @@ def avail(bot, update, user_data, data):
     else:
         avail_rq["to"] = data["dates"][0]
 
+    user_data["request"] = avail_rq
+
     if mocked:
         res = get_mocked_avail()
     else:
@@ -85,5 +89,42 @@ def avail(bot, update, user_data, data):
 
 
 def avail_location(bot, update, user_data, data):
-    return avail(bot, update, user_data, data)
+    avail_rq = {
+        "location": {"latitude": user_data["location"]["latitude"], "longitude": user_data["location"]["longitude"]}
+    }
+    # if "dates" in data.keys() and len(data["dates"])>0:
+    #     avail_rq["from"] = data["dates"][0]
+    # else:
+    avail_rq["from"] = datetime.datetime.today().strftime('%Y-%m-%d')
 
+    # if "dates" in data.keys() and len(data["dates"])>1:
+    #     avail_rq["to"] = data["dates"][1]
+    # else:
+    avail_rq["to"] = datetime.datetime.today().strftime('%Y-%m-%d')
+
+    user_data["request"] = avail_rq
+
+    if mocked:
+        res = get_mocked_avail()
+    else:
+        res = call('http://localhost:5000/avail', avail_rq)
+    parse_dispo(res, bot, update, user_data)
+
+
+
+def book(bot, update, user_data):
+    detail_rq = {
+        "from": user_data["request"]["from"],
+        "to": user_data["request"]["to"],
+        "activityCode": user_data["options"][user_data["selected"]]["code"]
+    }
+    detail_rs = json.loads(call('http://localhost:5000/detail', detail_rq).decode("utf-8"))
+
+    confirm_rq = {
+        "from": user_data["request"]["from"],
+        "to": user_data["request"]["to"],
+        "rateKey": detail_rs[0]["rateKey"]
+    }
+    print("confir rq:{}".format(confirm_rq))
+    confirm_rs = call('http://localhost:5000/booking/confirm',confirm_rq)
+    print(confirm_rs)

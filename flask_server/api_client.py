@@ -21,16 +21,8 @@ def call(endpoint, params=None):
     return response.content
 
 
-def avail_destination(destination_code, date_from, date_to):
+def avail_destination(date_from, date_to, destination_code=None, location=None):
     params = {
-      'filters': [
-            {
-                'searchFilterItems': [
-                    {'type': 'destination', 'value': destination_code}
-                ]
-
-            }
-      ],
       'from': date_from,
       'to': date_to,
       'language': 'en',
@@ -40,6 +32,24 @@ def avail_destination(destination_code, date_from, date_to):
       },
       'order': 'DEFAULT'
     }
+
+    if destination_code is not None:
+        params["filters"] = [
+            {
+                'searchFilterItems': [
+                    {'type': 'destination', 'value': destination_code}
+                ]
+            }
+        ]
+
+    if location is not None:
+        params["filters"] = [
+            {
+                'searchFilterItems': [
+                    {'type': 'gps', 'latitude': location["latitude"], 'longitude': location["longitude"]}
+                ]
+            }
+        ]
 
     return call("https://api.test.hotelbeds.com/activity-api/3.0/activities", params)
 
@@ -95,6 +105,7 @@ def booking_confirm(rateKey, date_from, date_to):
             }
           ]
         }
+    print("confirm params{}".format(params))
     return call("https://api.test.hotelbeds.com/activity-api/3.0/bookings", params)
 
 

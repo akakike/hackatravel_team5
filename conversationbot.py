@@ -128,6 +128,8 @@ def select_from_dispo(bot, update, user_data):
     bot.send_message(chat_id=update.message.chat_id,
                      text='{}'.format(user_data['response'][int(update.message.text[1]) - 1][2:]),
                      parse_mode=telegram.ParseMode.MARKDOWN)
+    user_data['selected'] = int(update.message.text[1]) - 1
+
     if 'token' in user_data.keys():
         update.message.reply_text('Do you want to book with your account stored information?\n',
                                   reply_markup=yesnopaxes_markup)
@@ -172,6 +174,7 @@ def book(bot, update, user_data):
     text = update.message.text
     if text == 'Yes':
         update.message.reply_text('Booking')
+        conversation_api.book(bot, update, user_data)
         # Book using API
         update.message.reply_text('Booking successful', reply_markup=main_markup)
         return conversation_actions.CHOOSING
@@ -227,6 +230,11 @@ def main():
                                                      CommandHandler('3', select_from_dispo, pass_user_data=True),
                                                      CommandHandler('4', select_from_dispo, pass_user_data=True),
                                                      CommandHandler('5', select_from_dispo, pass_user_data=True),
+                                                     CommandHandler('6', select_from_dispo, pass_user_data=True),
+                                                     CommandHandler('7', select_from_dispo, pass_user_data=True),
+                                                     CommandHandler('8', select_from_dispo, pass_user_data=True),
+                                                     CommandHandler('9', select_from_dispo, pass_user_data=True),
+                                                     CommandHandler('10', select_from_dispo, pass_user_data=True),
                                                      RegexHandler('^(Date|Price|Cheapest dates)$',
                                                                   filter,
                                                                   pass_user_data=True)
