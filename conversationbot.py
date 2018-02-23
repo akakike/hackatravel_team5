@@ -4,8 +4,9 @@
 from telegram import KeyboardButton, ReplyKeyboardMarkup, ReplyKeyboardRemove
 from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, RegexHandler,
                           ConversationHandler)
-
+import request_interpreter as nlp
 import logging
+import requests
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -13,19 +14,28 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 
 logger = logging.getLogger(__name__)
 
-CHOOSING, LOG_IN, CHOOSE_DESTINATION, SEARCH_BY_LOCATION, FILTER_AND_SELECT, CHECK_PERSONAL_INFO, CONFIRMATION, ASK_INFO, CONFIRM_ACCOUNT_INFO = range(9)
+CHOOSING, LOG_IN, CHOOSE_DESTINATION, SEARCH_BY_LOCATION, FILTER_AND_SELECT, FILTER, CHECK_PERSONAL_INFO, CONFIRMATION, ASK_INFO, CONFIRM_ACCOUNT_INFO = range(10)
 
 main_keyboard = [['Book'], 
                  ['Near me'],
                  ['Log in']]
 yesno_keyboard = [['Yes'],
                   ['No']]
-filter_keyboard = [['Por fecha'], 
-                   ['Por precio'], 
-                   ['Fechas más baratas']]
+filter_keyboard = [['Date'], 
+                   ['Price'], 
+                   ['Cheapest dates']]
 main_markup = ReplyKeyboardMarkup(main_keyboard, one_time_keyboard=True)
 yesno_markup = ReplyKeyboardMarkup(yesno_keyboard, one_time_keyboard=True)
 filter_markup = ReplyKeyboardMarkup(filter_keyboard, one_time_keyboard=True)
+
+def call(endpoint, params=None):
+
+    # Create http request and add headers
+    headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
+
+    # Reading response and print-out
+    response = requests.post(endpoint, json=params, headers=headers)
+    return response.content
 
 def facts_to_str(user_data):
     facts = list()
@@ -47,8 +57,10 @@ def start(bot, update):
 def log_in(bot, update, user_data):
     update.message.reply_text('Logging in...')
     # OAUTH
+    r = call('http://localhost:5000/avail')
+
     user_data['token'] = '1234'
-    update.message.reply_text('OK! What do you want to do now?', reply_markup=main_markup)
+    update.message.reply_text('OK! What do you want to do now? {}'.format(r), reply_markup=main_markup)
     return CHOOSING
 
 def regular_choice(bot, update, user_data):
@@ -79,7 +91,8 @@ def search_by_location(bot, update, user_data):
 def nl_to_dispo(bot, update, user_data):
     text = update.message.text
     user_data['nl_message'] = text
-    update.message.reply_text('Querying results for"{}"'.format(text))
+    parsed_text = nlp.translate_human_request(text)
+    update.message.reply_text('Querying results for"{}"'.format(parsed_text))
     # Get info with NLP
     # Ask API
     user_data['response'] = '/1 Destino 1 \n /2 Destino 2' #Api response
@@ -88,7 +101,26 @@ def nl_to_dispo(bot, update, user_data):
     return FILTER_AND_SELECT
 
 def filter(bot, update, user_data):
-    # Filter results
+    text = update.message.text
+    user_data['filter'] = text
+    if text == "Date":
+        update.message.reply_text('What dates do you want?')
+    elif text == "Price":
+        update.message.reply_text('Enter a price:')
+    else:
+        apply_filter(bot, update, user_data)
+    return FILTER
+
+def apply_filter(bot, update, user_data):
+    text = update.message.text
+    command = user_data['filter']
+    data = nlp.translate_human_request(text)
+    #if command == "Date":
+        
+    #elif command == "Price":
+        
+    #else:
+        
     new_results = user_data['response']
     update.message.reply_text('Reply:\n {}'.format(new_results))
     update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
@@ -119,9 +151,13 @@ def parse_user_info(bot, update, user_data):
     return CONFIRMATION
 
 def book(bot, update, user_data):
-    update.message.reply_text('Booking')
-    # Book using API
-    update.message.reply_text('Booking successful', reply_markup = main_markup)
+    text = update.message.text
+    if text == 'Yes':
+        update.message.reply_text('Booking')
+        # Book using API
+        update.message.reply_text('Booking successful', reply_markup = main_markup)
+    else:
+        update.message.reply_text('Cancelling..', reply_markup = main_markup)
     return CHOOSING
 
 def confirm(update, info):
@@ -176,10 +212,11 @@ def main():
                                 CommandHandler('3', select_from_dispo, pass_user_data=True),
                                 CommandHandler('4', select_from_dispo, pass_user_data=True),
                                 CommandHandler('5', select_from_dispo, pass_user_data=True),
-                                RegexHandler('^(Por fecha|Por precio|Fechas más baratas)$', 
+                                RegexHandler('^(Date|Price|Cheapest dates)$',
                                              filter, 
                                              pass_user_data=True)
-                               ],
+                                ],
+            FILTER: [MessageHandler(Filters.text, apply_filter, pass_user_data = True)],
             CONFIRM_ACCOUNT_INFO: [RegexHandler('^(Yes|No)$', confirm_account_info, pass_user_data = True)],
             ASK_INFO: [MessageHandler(Filters.text, 
                                       parse_user_info, 
