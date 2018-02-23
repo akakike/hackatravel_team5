@@ -6,6 +6,7 @@ from telegram.ext import (Updater, CommandHandler, MessageHandler, Filters, Rege
                           ConversationHandler)
 import request_interpreter as nlp
 from json_parser import parse_dispo
+import conversation_api
 import logging
 import requests
 
@@ -29,62 +30,6 @@ main_markup = ReplyKeyboardMarkup(main_keyboard, one_time_keyboard=True)
 yesno_markup = ReplyKeyboardMarkup(yesno_keyboard, one_time_keyboard=True)
 filter_markup = ReplyKeyboardMarkup(filter_keyboard, one_time_keyboard=True)
 
-def call(endpoint, params=None):
-    return """
-    [
-   {
-       "duration": "Full day",
-       "image": "http://media.activitiesbank.com/32802/ENG/S/32802_3.jpg",
-       "name": "Aquatica Meal Deal",
-       "priceFrom": 12.86,
-       "priceTo": 21.45,
-       "target": "Families",
-       "type": "Theme and water parks"
-   },
-   {
-       "duration": "Full day",
-       "image": "http://media.activitiesbank.com/13684/ENG/S/13684_2.jpg",
-       "name": "Legoland Florida",
-       "priceFrom": 64.47,
-       "priceTo": 59.61,
-       "target": "Families",
-       "type": "Theme and water parks"
-   },
-   {
-       "duration": "Flexible",
-       "image": "http://media.activitiesbank.com/28252/ENG/S/28252_4.jpg",
-       "name": "ATV off-road experience",
-       "priceFrom": 75.4,
-       "priceTo": 75.4,
-       "target": "Youth",
-       "type": "Tours & Activities"
-   },
-   {
-       "duration": "Full day",
-       "image": "http://media.activitiesbank.com/16406/ENG/S/16406_4.jpg",
-       "name": "Adventures in the Wild",
-       "priceFrom": 26.54,
-       "priceTo": 18.3,
-       "target": "Youth",
-       "type": "Tours & Activities"
-   },
-   {
-       "duration": "Full day",
-       "image": "http://media.activitiesbank.com/30362/ENG/S/30362_2.jpg",
-       "name": "Airboat and monster truck ride",
-       "priceFrom": 78.4,
-       "priceTo": 66.07,
-       "target": "Families",
-       "type": "Tours & Activities"
-   }
-]
-    """
-    # Create http request and add headers
-    headers = {'Accept': 'application/json', 'Content-Type': 'application/json'}
-
-    # Reading response and print-out
-    response = requests.post(endpoint, json=params, headers=headers)
-    return response.content
 
 def facts_to_str(user_data):
     facts = list()
@@ -94,10 +39,13 @@ def facts_to_str(user_data):
 
     return "\n".join(facts).join(['\n', '\n'])
 
+def reset(bot, update):
+    update.message.reply_text("Let's restart", reply_markup=main_markup)
+    return CHOOSING
 
 def start(bot, update):
     update.message.reply_text(
-        "Hi! My name is Tamagochi."
+        "Hi! My name is Hack@Travel."
         "How can I help you?",
         reply_markup=main_markup)
 
@@ -110,6 +58,7 @@ def log_in(bot, update, user_data):
     user_data['token'] = '1234'
     update.message.reply_text('OK! What do you want to do now?', reply_markup=main_markup)
     return CHOOSING
+
 
 def regular_choice(bot, update, user_data):
     text = update.message.text
@@ -125,7 +74,8 @@ def regular_choice(bot, update, user_data):
     else:
         update.message.reply_text('Type your credentials')
         return LOG_IN
-    
+
+
 def search_by_location(bot, update, user_data):
     user_data['location'] = update.message.location
     # Get area offers by area from API
@@ -136,19 +86,21 @@ def search_by_location(bot, update, user_data):
     update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
     return FILTER_AND_SELECT
 
+
 def nl_to_dispo(bot, update, user_data):
     text = update.message.text
     user_data['nl_message'] = text
     parsed_text = nlp.translate_human_request(text)
     update.message.reply_text('Querying results for"{}"'.format(parsed_text))
     
-    res = call('http://localhost:5000/avail')
-    res = parse_dispo(res)
+    res = conversation_api.call('http://localhost:5000/avail')
+    res = parse_dispo(res, bot, update, user_data)
 
-    user_data['response'] = res
-    update.message.reply_text('{}'.format(user_data['response']))
+    # user_data['response'] = res
+    # update.message.reply_text('{}'.format(user_data['response']))
     update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
     return FILTER_AND_SELECT
+
 
 def filter(bot, update, user_data):
     text = update.message.text
@@ -241,7 +193,7 @@ def main():
 
     # Add conversation handler with the states GENDER, PHOTO, LOCATION and BIO
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler('start', start)],
+        entry_points=[CommandHandler('start', start), CommandHandler('reset', reset)],
 
         states={
             CHOOSING: [RegexHandler('^(Book|Near me|Log in)$',
@@ -281,7 +233,9 @@ def main():
 
         fallbacks=[RegexHandler('^Done$', done, pass_user_data=True),
                    MessageHandler(Filters.location, search_by_location, pass_user_data = True)
-                  ]
+                  ],
+
+        allow_reentry=True
     )
 
     dp.add_handler(conv_handler)

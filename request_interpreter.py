@@ -1,5 +1,5 @@
 import nltk
-from geotext import GeoText
+#from geotext import GeoText
 import dateparser
 
 FILE_PATH = 'resources/destinations.csv'
@@ -44,9 +44,9 @@ def extract_places(tags, destination_map):
     for tag in tags:
         if "NN" == tag[1]:
             place = tag[0]
-            cities = GeoText(place.upper()).cities
-            if cities.__len__() > 0:
-                for city in cities:
-                    places.append(destination_map[city])
+            #cities = GeoText(place.upper()).cities
+            # if cities.__len__() > 0:
+            #     for city in cities:
+            #         places.append(destination_map[city])
     return places
 
