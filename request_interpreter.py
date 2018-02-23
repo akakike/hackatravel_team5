@@ -1,9 +1,12 @@
 import nltk
 from geotext import GeoText
 import dateparser
-from dateutil.parser import parse
+from nltk.corpus import stopwords
+from time import strftime
 
 FILE_PATH = 'resources/destinations.csv'
+
+stopWords = set(stopwords.words('english'))
 
 def translate_human_request(request):
     tokens = nltk.word_tokenize(request)
@@ -22,7 +25,10 @@ def extract_dates(request):
     dates = []
     for p in pairs:
         try:
-            dates.append(parse(' '.join(p)))
+            if sum([c in stopWords for c in p]) == 0:
+                date = dateparser.parse(' '.join(p))
+                if date != None:
+                    dates.append(date.strftime("%Y-%m-%d"))
         except:
             pass
     return dates
@@ -47,4 +53,5 @@ def extract_places(tags, destination_map):
                 for city in cities:
                     places.append(destination_map[city])
     return places
+
 
