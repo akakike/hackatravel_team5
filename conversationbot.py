@@ -11,6 +11,7 @@ import conversation_pax
 import conversation_actions
 import conversation_helper
 import logging
+from emoji import emojize
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -41,8 +42,14 @@ def reset(bot, update):
 def start(bot, update):
     update.message.reply_text(
         "Hi! My name is Hack@Travel."
-        "How can I help you?",
+        "How can I help you?"
+        "\nIf you want to restart your search type /reset"
+        "\nI suppose you are here looking for an activity"
+        "Am I right? " + emojize(':direct_hit:', use_aliases=True)
+        ,
         reply_markup=main_markup)
+
+    #bot.send_message(update.message.chat_id, emojize(':direct_hit:', use_aliases=True))
 
     return conversation_actions.CHOOSING
 
@@ -198,7 +205,8 @@ def confirm(bot, update, user_data):
 
 def main():
     # Create the Updater and pass it your bot's token.
-    updater = Updater(token="429486437:AAEsUvzhpLL6YBgdJOCheJ81PBw7WY3MMt8")
+    updater = Updater(token="537393200:AAEoMW2iuH1SUjkZt5PoVeo6sPQDZuNJheo")
+    #Kike updater = Updater(token="528148174:AAHhjwmFFBS76wcbN7bw3Q8R9JM2taOAX-s")
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher

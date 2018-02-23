@@ -46,12 +46,13 @@ def destinations_mapper():
 def extract_places(tags, destination_map):
     places = []
     for tag in tags:
-        if "NNP" == tag[1]:
-            place = tag[0]
-            cities = GeoText(place.upper()).cities
-            if cities.__len__() > 0:
-                for city in cities:
-                    places.append(destination_map[city])
+        place = tag[0]
+        cities = GeoText(place.upper()).cities
+        if cities.__len__() > 0:
+            for city in cities:
+                places.append(destination_map[city])
+                return places
+
     return places
 
 
