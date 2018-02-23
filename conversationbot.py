@@ -118,14 +118,15 @@ def filter(bot, update, user_data):
 def apply_filter(bot, update, user_data):
     text = update.message.text
     command = user_data['filter']
-    data = nlp.translate_human_request(text)
     # if command == "Date":
 
-    # elif command == "Price":
-
-    # else:
-
-    conversation_api.avail(bot, update, user_data)
+    if command == "Price":
+        if 'destination' in user_data:
+            conversation_api.avail(bot, update, user_data, user_data, text)
+        elif 'location' in user_data:
+            conversation_api.avail_location(bot, update, user_data, user_data, text)
+        else:
+            conversation_api.avail(bot, update, user_data, user_data)
 
     update.message.reply_text('Select an option or filter the results:', reply_markup=filter_markup)
     return conversation_actions.FILTER_AND_SELECT

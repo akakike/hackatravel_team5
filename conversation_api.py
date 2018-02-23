@@ -68,11 +68,25 @@ def call(endpoint, params=None):
     return response.content
 
 
-def avail(bot, update, user_data, data):
-    #update.message.reply_text('Querying results for"{}"'.format(data))
-    avail_rq = {
-        "destination": data["places"][0],
-    }
+def avail(bot, update, user_data, data, price=None):
+    # update.message.reply_text('Querying results for"{}"'.format(data))
+    avail_rq = {}
+    if price:
+        avail_rq = {
+            "filters": [
+                {
+                    "searchFilterItems": [
+                        {"type": "priceFrom", "value": 0},
+                        {"type": "priceTo", "value": price}
+                    ]
+                }
+            ],
+            "destination": data["places"][0],
+        }
+    else:
+        avail_rq = {
+            "destination": data["places"][0],
+        }
     if len(data["dates"]) > 1:
         avail_rq["from"] = data["dates"][0]
         avail_rq["to"] = data["dates"][1]
@@ -92,10 +106,25 @@ def avail(bot, update, user_data, data):
     parse_dispo(res, bot, update, user_data)
 
 
-def avail_location(bot, update, user_data, data):
-    avail_rq = {
-        "location": {"latitude": user_data["location"]["latitude"], "longitude": user_data["location"]["longitude"]}
-    }
+def avail_location(bot, update, user_data, data, price=None):
+    avail_rq = {}
+    if price:
+        avail_rq = {
+            "location": {"latitude": user_data["location"]["latitude"], "longitude": user_data["location"]["longitude"]},
+            "filters": [
+                {
+                    "searchFilterItems": [
+                        {"type": "priceFrom", "value": 0},
+                        {"type": "priceTo", "value": price}
+                    ]
+                }
+            ]
+        }
+    else:
+        avail_rq = {
+            "location": {"latitude": user_data["location"]["latitude"], "longitude": user_data["location"]["longitude"]},
+        }
+
     # if "dates" in data.keys() and len(data["dates"])>0:
     #     avail_rq["from"] = data["dates"][0]
     # else:
@@ -104,7 +133,7 @@ def avail_location(bot, update, user_data, data):
     #     avail_rq["to"] = data["dates"][1]
     # else:
     avail_rq["to"] = datetime.datetime.today().strftime('%Y-%m-%d')
-    
+
     user_data["request"] = avail_rq
 
     if mocked:
