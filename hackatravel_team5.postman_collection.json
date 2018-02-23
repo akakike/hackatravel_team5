@@ -1,0 +1,137 @@
+{
+	"info": {
+		"name": "hackatravel_team5",
+		"_postman_id": "bb0262a8-e389-c523-170e-9f28507561c6",
+		"description": "",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "booking confirm",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n   \"from\": \"2018-03-21\",\r\n        \"rateKey\": \"q6o8huklhu697nel02jv04pg58\",\r\n        \"to\": \"2018-03-26\"\r\n}\r\n"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000//booking/confirm",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"",
+						"booking",
+						"confirm"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "booking delete",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"body": {},
+				"url": {
+					"raw": "http://127.0.0.1:5000//booking/cancel/:reference",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"",
+						"booking",
+						"cancel",
+						":reference"
+					],
+					"variable": [
+						{
+							"key": "reference",
+							"value": "123-456"
+						}
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "avail",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n\t\"destination\": \"BCN\",\n\t\"from\": \"2018-03-21\",\n    \"to\": \"2018-03-26\"\n}"
+				},
+				"url": {
+					"raw": "http://127.0.0.1:5000/avail",
+					"protocol": "http",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "5000",
+					"path": [
+						"avail"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		},
+		{
+			"name": "detail",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"activityCode\": \"E-E10-MTD6DANDTO\",\r\n\t\"from\": \"2018-03-21\",\r\n    \"to\": \"2018-03-26\"\r\n}\r\n"
+				},
+				"url": {
+					"raw": "localhost:5000/detail",
+					"host": [
+						"localhost"
+					],
+					"port": "5000",
+					"path": [
+						"detail"
+					]
+				},
+				"description": ""
+			},
+			"response": []
+		}
+	]
+}

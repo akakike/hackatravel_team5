@@ -7,15 +7,19 @@ from flask.json import jsonify
 app = Flask(__name__)
 
 
-class AvailRS(object):
+class Response(object):
     def __init__(self, data):
-        self.__dict__ = json.loads(data.decode("utf-8") )
+        self.__dict__ = json.loads(data.decode("utf-8"))
 
 
 @app.route("/avail", methods=['POST'])
 def avail():
-    avail_response = api_client.avail_destination('MCO')
-    avail_json = AvailRS(avail_response)
+    values = request.get_json()
+    destination = values['destination']
+    date_from = values['from']
+    date_to = values['to']
+    avail_response = api_client.avail_destination(destination, date_from, date_to)
+    avail_json = Response(avail_response)
 
     result = []
 
@@ -23,6 +27,7 @@ def avail():
         activity_item = activity_result
         item = {
             'name': activity_item["name"],
+            'code': activity_item["code"],
             'priceFrom': activity_item["amountsFrom"][0]["amount"],
             'priceTo': activity_item["amountsFrom"][len(activity_item["amountsFrom"])-1]["amount"]
         }
@@ -40,7 +45,35 @@ def avail():
         result.append(item)
 
     return jsonify(result)
-    # return result
+
+
+@app.route("/detail", methods=['POST'])
+def detail():
+    values = request.get_json()
+    activity_code = values['activityCode']
+    date_from = values['from']
+    date_to = values['to']
+    detail_response = api_client.detail(activity_code, date_from, date_to)
+    detail_json = Response(detail_response)
+
+    result = []
+
+    activity = detail_json.activity
+    if activity != None:
+        modalities = activity['modalities']
+        modality = modalities[0]
+        rate = modality['rates'][0]
+        rate_detail = rate['rateDetails'][0]
+        operation_date = rate_detail['operationDates'][0]
+        item = {
+            'rateKey': rate_detail["rateKey"],
+            'from': operation_date["from"],
+            'to': operation_date["to"]
+        }
+        result.append(item)
+
+    return jsonify(result)
+
 
 @app.route("/booking/confirm", methods=['POST'])
 def confirm():
@@ -48,7 +81,19 @@ def confirm():
     rateKey = values['rateKey']
     date_from = values['from']
     date_to = values['to']
-    return api_client.booking_confirm(rateKey, date_from, date_to)
+    response = api_client.booking_confirm(rateKey, date_from, date_to)
+    response_json = Response(response)
+
+    result = []
+
+    booking = response_json.booking
+    if booking != None:
+        item = {
+            'reference': booking["reference"]
+        }
+        result.append(item)
+
+    return jsonify(result)
 
 
 @app.route("/booking/cancel/<reference>", methods=['DELETE'])

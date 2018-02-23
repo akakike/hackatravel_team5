@@ -21,7 +21,7 @@ def call(endpoint, params=None):
     return response.content
 
 
-def avail_destination(destination_code):
+def avail_destination(destination_code, date_from, date_to):
     params = {
       'filters': [
             {
@@ -31,8 +31,8 @@ def avail_destination(destination_code):
 
             }
       ],
-      'from': '2018-03-28',
-      'to': '2018-03-30',
+      'from': date_from,
+      'to': date_to,
       'language': 'en',
       'pagination': {
         'itemsPerPage': 10,
@@ -43,6 +43,20 @@ def avail_destination(destination_code):
 
     return call("https://api.test.hotelbeds.com/activity-api/3.0/activities", params)
 
+
+def detail(activity_code, date_from, date_to):
+    params = {
+        "code": activity_code,
+        "from": date_from,
+        "to": date_to,
+        "language": "en",
+        "paxes": [
+            {"age": 30},
+            {"age": 30}
+        ]
+    }
+
+    return call("https://api.test.hotelbeds.com/activity-api/3.0/activities/details", params)
 
 
 def booking_confirm(rateKey, date_from, date_to):
@@ -72,9 +86,9 @@ def booking_confirm(rateKey, date_from, date_to):
                   "surname": "Test"
                 },
                 {
-                  "age": 10,
+                  "age": 30,
                   "name": "TestPax2",
-                  "type": "CHILD",
+                  "type": "ADULT",
                   "surname": "Test"
                 }
               ]
